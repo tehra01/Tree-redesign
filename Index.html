@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Wellness Tree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #06080f;
+  --surface: rgba(255,255,255,0.032);
+  --surface2: rgba(255,255,255,0.055);
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8ecf4;
+  --muted: rgba(232,236,244,0.5);
+  --faint: rgba(232,236,244,0.2);
+  --red: #ff5555;
+  --red-glow: rgba(255,85,85,0.3);
+  --gold: #c9a84c;
+  --gold-dim: rgba(201,168,76,0.15);
+  --accent: #7eb8c9;
+
+  --c-fitness:   #4aa3ff;
+  --c-mind:      #a78bfa;
+  --c-hygiene:   #94a3b8;
+  --c-nutrition: #fb923c;
+  --c-home:      #a3865e;
+  --c-creative:  #4ade80;
+  --c-social:    #f472b6;
+  --c-sleep:     #818cf8;
+  --c-learning:  #e2e8f0;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* ── GRAIN OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.6;
+}
+
+/* ── LAYOUT ── */
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  grid-template-rows: 1fr;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 900px) {
+  html, body {
+    overflow: hidden;
+    height: 100%;
+    height: 100dvh;
+  }
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: 42vh 58vh;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .tree-panel {
+    height: 42vh;
+    min-height: 0;
+    flex-shrink: 0;
+  }
+  .side {
+    max-height: none !important;
+    height: 100%;
+    min-height: 0;
+    border-left: none !important;
+    border-top: 1px solid var(--border);
+  }
+  /* Shrink topbar on mobile */
+  .topbar { padding: 10px 14px 8px; }
+  .app-name { font-size: 17px; }
+  .app-date { font-size: 9px; }
+  .icon-btn { width: 30px; height: 30px; font-size: 13px; }
+  /* Bottom bar tighter - and make sure it doesn't overlap tabs */
+  .bottom-bar { padding: 8px 14px; gap: 12px; }
+  .stat-chip .val { font-size: 20px; }
+  .stat-chip .lbl { font-size: 8px; }
+  .divider-v { height: 24px; }
+  .balance-ring-wrap { width: 40px; height: 40px; }
+  #balanceRingSvg { width: 40px; height: 40px; }
+  /* Tabs tighter on mobile */
+  .side-tab { padding: 11px 0 9px; font-size: 9px; letter-spacing: 0.1em; }
+  /* Side body more padding room */
+  .side-body { padding: 12px; }
+}
+
+/* ── TREE PANEL ── */
+.tree-panel {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse 80% 70% at 50% 40%, #0d1628 0%, #06080f 100%);
+  min-height: 280px;
+}
+
+/* Atmospheric glow layers */
+.tree-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 30%, rgba(126, 184, 201, 0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 20% 80%, rgba(167, 139, 250, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 70%, rgba(74, 222, 128, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── SVG TREE ── */
+#treeSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  padding: 18px 20px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  background: linear-gradient(to bottom, rgba(6,8,15,0.85) 0%, transparent 100%);
+}
+
+.topbar-left { display: flex; flex-direction: column; gap: 3px; }
+
+.app-name {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  line-height: 1;
+}
+
+.app-date {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.topbar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+.icon-btn:active { transform: scale(0.94); }
+
+/* ── LEAF LAYER ── */
+#leafLayer {
+  position: absolute;
+  left: 0; right: 0;
+  top: 58px;      /* below topbar */
+  bottom: 68px;   /* above bottom bar */
+  z-index: 5;
+}
+
+@media (max-width: 900px) {
+  #leafLayer {
+    top: 50px;
+    bottom: 60px;
+  }
+}
+
+.leaf {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(.34,1.56,.64,1), opacity 0.2s;
+}
+
+.leaf-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px 6px 8px;
+  border-radius: 999px;
+  background: rgba(6,8,15,0.72);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.leaf-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.leaf:hover .leaf-inner {
+  background: rgba(20,26,45,0.88);
+  border-color: var(--border2);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  filter: brightness(1.1);
+}
+.leaf:active .leaf-inner { filter: brightness(0.85); }
+
+.leaf.missed .leaf-inner {
+  border-color: rgba(255,85,85,0.4);
+  box-shadow: 0 0 12px var(--red-glow), 0 4px 20px rgba(0,0,0,0.4);
+}
+.leaf.missed .leaf-dot { background: var(--red) !important; }
+.leaf.carryover .leaf-inner {
+  border-color: rgba(255,85,85,0.35);
+  box-shadow: 0 0 10px rgba(255,85,85,0.2), 0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* Weekly progress arc on leaf */
+.leaf-prog {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+/* ── COMPLETE ANIMATION ── */
+@keyframes leafComplete {
+  0%   { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+  40%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+  100% { transform: translate(-50%,-50%) scale(0) rotate(20deg); opacity: 0; }
+}
+.leaf.completing { animation: leafComplete 0.45s cubic-bezier(.55,.06,.68,.19) forwards; pointer-events: none; }
+
+/* ── BOTTOM STATS BAR ── */
+.bottom-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
+  background: linear-gradient(to top, rgba(6,8,15,0.9) 0%, transparent 100%);
+}
+
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.stat-chip .val {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--text);
+}
+.stat-chip .lbl {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.divider-v {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+}
+
+/* Balance ring in bottom bar */
+.balance-ring-wrap {
+  margin-left: auto;
+  position: relative;
+  width: 56px;
+  height: 56px;
+  cursor: pointer;
+}
+.balance-ring-wrap:hover svg { transform: scale(1.08); }
+.balance-ring-wrap svg { transition: transform 0.2s; }
+.ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  pointer-events: none;
+  line-height: 1.2;
+}
+
+/* ── SIDE PANEL ── */
+.side {
+  border-left: 1px solid var(--border);
+  background: rgba(8,10,18,0.95);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 100vh;
+  min-height: 0;
+}
+
+.side-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.side-tab {
+  flex: 1;
+  padding: 14px 0 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.side-tab:hover { color: var(--text); }
+.side-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+.side-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* ── MOBILE STATS STRIP ── */
+.mobile-stats {
+  display: none; /* hidden on desktop */
+}
+
+@media (max-width: 900px) {
+  /* Hide the tree-panel bottom bar on mobile */
+  .bottom-bar { display: none !important; }
+
+  /* Show the mobile stats strip */
+  .mobile-stats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: rgba(8,10,18,0.98);
+  }
+  .mstat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+  }
+  .mstat-val {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+  }
+  .mstat-lbl {
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .mstat-div {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .mstat-ring {
+    margin-left: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .mstat-ring:active { opacity: 0.7; }
+}
+.wheel-section {
+  margin-bottom: 20px;
+}
+.section-label {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.wheel-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+#balanceWheel { flex-shrink: 0; }
+
+.wheel-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  color: var(--muted);
+  cursor: default;
+}
+.legend-row:hover { color: var(--text); }
+.legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.legend-pct { margin-left: auto; color: var(--faint); font-size: 10px; }
+.legend-row.has-data .legend-pct { color: var(--muted); }
+
+/* ── LOG LIST ── */
+.log-list {
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+.log-list li {
+  padding: 9px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 11.5px;
+}
+.log-list li .log-label {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+}
+.log-list li .log-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.log-time { color: var(--faint); font-size: 10px; flex-shrink: 0; }
+
+.empty-msg { color: var(--faint); font-size: 11px; padding: 14px 4px; font-style: italic; }
+
+/* ── SECTION HEADER ── */
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 18px 0 8px;
+}
+.sec-head:first-child { margin-top: 0; }
+.sec-title {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sec-count {
+  font-size: 10px;
+  color: var(--faint);
+}
+
+/* ── TASK MANAGE TAB ── */
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 11.5px;
+}
+.task-row .tr-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.task-row .tr-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.task-row .tr-type { color: var(--faint); font-size: 10px; flex-shrink: 0; }
+.task-row .tr-del {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1px solid rgba(255,85,85,0.25);
+  background: none;
+  color: rgba(255,85,85,0.5);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.task-row .tr-del:hover { background: rgba(255,85,85,0.1); color: var(--red); border-color: rgba(255,85,85,0.5); }
+.task-row.builtin .tr-del { opacity: 0.3; cursor: not-allowed; }
+
+/* Add task form */
+.add-form {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.add-form .form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.add-form input, .add-form select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.add-form input:focus, .add-form select:focus { border-color: var(--border2); }
+.add-form input.task-input { flex: 1; min-width: 0; }
+.add-form select { width: auto; }
+.add-form option { background: #111827; }
+.small-btn {
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.small-btn:hover { background: rgba(255,255,255,0.12); }
+.small-btn:active { transform: scale(0.96); }
+.small-btn.danger { border-color: rgba(255,85,85,0.3); color: rgba(255,85,85,0.7); }
+.small-btn.danger:hover { background: rgba(255,85,85,0.08); color: var(--red); }
+
+/* ── SETTINGS TAB ── */
+.setting-row {
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.setting-row label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.setting-row input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  outline: none;
+}
+.setting-row input:focus { border-color: var(--border2); }
+.setting-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+
+/* ── TARGETS MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.7);
+  z-index: 50;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  width: min(560px,100%);
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #0c1020;
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.7);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+@media (max-width: 900px) {
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal-card {
+    border-radius: 20px 20px 0 0;
+    max-height: 85vh;
+    width: 100%;
+    padding: 16px;
+  }
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.modal-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.target-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.target-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  transition: background 0.15s;
+}
+.target-row:hover { background: var(--surface2); }
+.target-row:first-child { border-radius: 12px 12px 0 0; }
+.target-row:last-child { border-radius: 0 0 12px 12px; }
+.tr-name { flex: 1; font-size: 12px; }
+.tr-stepper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stepper-btn {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.stepper-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--border2); }
+.stepper-val {
+  width: 28px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text);
+}
+.modal-foot { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: rgba(20,28,48,0.95);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 12px;
+  color: var(--text);
+  backdrop-filter: blur(12px);
+  z-index: 200;
+  transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), opacity 0.35s;
+  opacity: 0;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+.leaf { animation: fadeUp 0.4s cubic-bezier(.34,1.56,.64,1) both; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══ TREE PANEL ══ -->
+  <div class="tree-panel" id="treePanel">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="app-name">Wellness Tree</div>
+        <div class="app-date" id="dateDisplay"></div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" id="btnOpenTargets" title="Set weekly intentions">⊛</button>
+        <button class="icon-btn" id="btnExport" title="Export backup">↑</button>
+        <button class="icon-btn" id="btnImport" title="Import backup">↓</button>
+      </div>
+    </div>
+
+    <!-- SVG Tree -->
+    <svg id="treeSvg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="skyGlow" cx="50%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#162035" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#06080f" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#c9d4e8" stop-opacity="0.12"/>
+          <stop offset="100%" stop-color="#c9d4e8" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="softglow">
+          <feGaussianBlur stdDeviation="8" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <linearGradient id="trunkGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#1a0f06"/>
+          <stop offset="50%" stop-color="#2d1a0e"/>
+          <stop offset="100%" stop-color="#1a0f06"/>
+        </linearGradient>
+        <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0d1020"/>
+          <stop offset="100%" stop-color="#06080f"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Sky atmosphere -->
+      <rect width="800" height="600" fill="url(#skyGlow)"/>
+
+      <!-- Distant moon -->
+      <circle cx="650" cy="90" r="45" fill="#c9d4e8" opacity="0.06"/>
+      <circle cx="650" cy="90" r="36" fill="#c9d4e8" opacity="0.05"/>
+      <circle cx="650" cy="90" r="24" fill="#d8e0f0" opacity="0.07"/>
+
+      <!-- Stars -->
+      <g opacity="0.5">
+        <circle cx="80" cy="50" r="1" fill="#e8ecf4"/>
+        <circle cx="160" cy="80" r="0.7" fill="#e8ecf4"/>
+        <circle cx="300" cy="30" r="1.2" fill="#e8ecf4"/>
+        <circle cx="420" cy="60" r="0.8" fill="#e8ecf4"/>
+        <circle cx="560" cy="40" r="1" fill="#e8ecf4"/>
+        <circle cx="720" cy="70" r="0.7" fill="#e8ecf4"/>
+        <circle cx="120" cy="140" r="0.6" fill="#e8ecf4"/>
+        <circle cx="680" cy="160" r="0.9" fill="#e8ecf4"/>
+        <circle cx="50" cy="200" r="0.5" fill="#e8ecf4"/>
+        <circle cx="740" cy="200" r="0.6" fill="#e8ecf4"/>
+        <circle cx="200" cy="120" r="0.4" fill="#e8ecf4"/>
+        <circle cx="500" cy="25" r="0.5" fill="#e8ecf4"/>
+      </g>
+
+      <!-- Ground mist -->
+      <ellipse cx="400" cy="590" rx="500" ry="60" fill="url(#groundGrad)" opacity="0.9"/>
+
+      <!-- Root suggestions -->
+      <path d="M370 520 C340 535 300 545 260 548" stroke="#1a0f06" stroke-width="6" fill="none" opacity="0.5"/>
+      <path d="M400 525 C395 540 380 555 360 560" stroke="#1a0f06" stroke-width="5" fill="none" opacity="0.4"/>
+      <path d="M430 520 C460 535 500 545 540 548" stroke="#1a0f06" stroke-width="6" fill="none" opacity="0.5"/>
+      <path d="M390 528 C388 550 392 570 394 585" stroke="#1a0f06" stroke-width="4" fill="none" opacity="0.3"/>
+
+      <!-- Main trunk -->
+      <path d="M370 520 C368 480 362 440 360 400 C358 360 362 320 365 280 C367 250 370 230 375 200" 
+            stroke="url(#trunkGrad)" stroke-width="28" fill="none" stroke-linecap="round"/>
+      <path d="M430 520 C432 480 438 440 440 400 C442 360 438 320 435 280 C433 250 430 230 425 200"
+            stroke="url(#trunkGrad)" stroke-width="22" fill="none" stroke-linecap="round"/>
+      <!-- trunk join -->
+      <path d="M375 200 C390 195 410 195 425 200" stroke="#2d1a0e" stroke-width="20" fill="none" stroke-linecap="round"/>
+      <path d="M400 505 C399 490 398 460 398 430" stroke="#250e00" stroke-width="4" fill="none" opacity="0.4"/>
+
+      <!-- Main branches -->
+      <!-- Left canopy branches -->
+      <path d="M378 320 C350 295 310 285 270 270" stroke="#2d1a0e" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M370 280 C330 255 290 240 240 225" stroke="#2d1a0e" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M375 240 C345 210 310 195 270 180" stroke="#2d1a0e" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M378 200 C355 175 330 155 300 140" stroke="#2d1a0e" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M380 175 C355 150 325 130 290 115" stroke="#241006" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- sub-branches left -->
+      <path d="M310 285 C295 265 280 255 260 248" stroke="#241006" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M270 270 C250 255 230 250 210 248" stroke="#241006" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M270 180 C255 165 240 158 220 155" stroke="#241006" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M300 140 C285 122 270 115 250 112" stroke="#241006" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+      <!-- Right canopy branches -->
+      <path d="M422 320 C450 295 490 285 530 270" stroke="#2d1a0e" stroke-width="12" fill="none" stroke-linecap="round"/>
+      <path d="M430 280 C470 255 510 240 560 225" stroke="#2d1a0e" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <path d="M425 240 C455 210 490 195 530 180" stroke="#2d1a0e" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M422 200 C445 175 470 155 500 140" stroke="#2d1a0e" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M420 175 C445 150 475 130 510 115" stroke="#241006" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- sub-branches right -->
+      <path d="M490 285 C505 265 520 255 540 248" stroke="#241006" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <path d="M530 270 C550 255 570 250 590 248" stroke="#241006" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M530 180 C545 165 560 158 580 155" stroke="#241006" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M500 140 C515 122 530 115 550 112" stroke="#241006" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+      <!-- Crown branches -->
+      <path d="M396 200 C390 175 385 155 380 130" stroke="#241006" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M404 200 C410 175 415 155 420 130" stroke="#241006" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <path d="M400 200 C398 170 396 145 394 115" stroke="#241006" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- crown tips -->
+      <path d="M380 130 C370 110 360 98 345 88" stroke="#1a0a00" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M394 115 C390 95 385 80 382 65" stroke="#1a0a00" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M420 130 C430 110 440 98 455 88" stroke="#1a0a00" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <!-- Leaves -->
+    <div id="leafLayer"></div>
+
+    <!-- Bottom stats -->
+    <div class="bottom-bar">
+      <div class="stat-chip">
+        <div class="val" id="statToday">0</div>
+        <div class="lbl">Today</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="stat-chip">
+        <div class="val" id="statWeek">0</div>
+        <div class="lbl">This week</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="stat-chip">
+        <div class="val" id="statOnTree">0</div>
+        <div class="lbl">Remaining</div>
+      </div>
+      <!-- Balance ring -->
+      <div class="balance-ring-wrap" id="balanceRingWrap" title="Category balance">
+        <svg id="balanceRingSvg" width="56" height="56" viewBox="0 0 56 56"></svg>
+        <div class="ring-label">balance</div>
+      </div>
+    </div>
+
+  </div><!-- /tree-panel -->
+
+  <!-- ══ SIDE PANEL ══ -->
+  <div class="side">
+    <!-- Mobile-only stats strip (replaces bottom-bar which is hidden on mobile) -->
+    <div class="mobile-stats" id="mobileStats">
+      <div class="mstat"><span class="mstat-val" id="mStatToday">0</span><span class="mstat-lbl">Today</span></div>
+      <div class="mstat-div"></div>
+      <div class="mstat"><span class="mstat-val" id="mStatWeek">0</span><span class="mstat-lbl">Week</span></div>
+      <div class="mstat-div"></div>
+      <div class="mstat"><span class="mstat-val" id="mStatTree">0</span><span class="mstat-lbl">Remaining</span></div>
+      <div class="mstat-ring" id="mStatRing" title="Balance">
+        <svg id="mBalanceRingSvg" width="36" height="36" viewBox="0 0 36 36"></svg>
+      </div>
+    </div>
+    <div class="side-tabs">
+      <button class="side-tab active" data-tab="activity">Activity</button>
+      <button class="side-tab" data-tab="balance">Balance</button>
+      <button class="side-tab" data-tab="tasks">Tasks</button>
+      <button class="side-tab" data-tab="settings">More</button>
+    </div>
+
+    <div class="side-body">
+
+      <!-- ── ACTIVITY TAB ── -->
+      <div class="tab-pane active" id="tab-activity">
+        <div class="sec-head">
+          <span class="sec-title">Completed today</span>
+          <span class="sec-count" id="countToday">—</span>
+        </div>
+        <ul class="log-list" id="logToday"></ul>
+
+        <div class="sec-head">
+          <span class="sec-title">Completed this week</span>
+          <span class="sec-count" id="countWeek">—</span>
+        </div>
+        <ul class="log-list" id="logWeek"></ul>
+      </div>
+
+      <!-- ── BALANCE TAB ── -->
+      <div class="tab-pane" id="tab-balance">
+        <div class="sec-head" style="margin-top:0">
+          <span class="sec-title">Your week so far</span>
+        </div>
+        <div class="wheel-section">
+          <div class="wheel-wrap">
+            <svg id="balanceWheel" width="120" height="120" viewBox="0 0 120 120"></svg>
+            <div class="wheel-legend" id="wheelLegend"></div>
+          </div>
+        </div>
+        <div class="sec-head">
+          <span class="sec-title">Week theme</span>
+        </div>
+        <div id="weekTheme" style="font-size:12px; color:var(--muted); padding:4px 0 16px; font-style:italic;"></div>
+        <div class="sec-head">
+          <span class="sec-title">Category breakdown</span>
+        </div>
+        <div id="catBars"></div>
+      </div>
+
+      <!-- ── TASKS TAB ── -->
+      <div class="tab-pane" id="tab-tasks">
+        <div class="add-form">
+          <div class="section-label" style="margin-bottom:8px">Add a practice</div>
+          <div class="form-row">
+            <input class="task-input" id="newTaskLabel" type="text" placeholder="e.g., Morning pages" />
+          </div>
+          <div class="form-row">
+            <select id="newTaskType">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+            <select id="newTaskCat"></select>
+            <button class="small-btn" id="btnAddTask">Add</button>
+          </div>
+        </div>
+        <div class="sec-head">
+          <span class="sec-title">All practices</span>
+        </div>
+        <div id="allTasksList"></div>
+      </div>
+
+      <!-- ── SETTINGS TAB ── -->
+      <div class="tab-pane" id="tab-settings">
+        <div class="setting-row">
+          <label>Background image URL</label>
+          <input id="bgUrl" type="text" placeholder="https://example.com/tree.jpg"/>
+          <div class="setting-actions" style="margin-top:8px">
+            <button class="small-btn" id="btnSaveBg">Save image</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label>Reset today's completions</label>
+          <div class="setting-actions">
+            <button class="small-btn" id="btnResetToday">Reset today</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label>Debug: force new week</label>
+          <div class="setting-actions">
+            <button class="small-btn" id="btnForceWeek">Force new week</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label>Data backup</label>
+          <div class="setting-actions">
+            <button class="small-btn" id="btnExport2">Export JSON</button>
+            <button class="small-btn" id="btnImport2">Import JSON</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label style="color:rgba(255,85,85,0.6)">Danger zone</label>
+          <div class="setting-actions">
+            <button class="small-btn danger" id="btnClearAll">Clear everything</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══ TARGETS MODAL ══ -->
+<div class="modal-overlay" id="modalTargets">
+  <div class="modal-card">
+    <div class="modal-title">Weekly Intentions</div>
+    <div class="modal-sub">How many times do you want each practice this week? Set 0 to rest it.</div>
+    <div class="target-grid" id="targetGrid"></div>
+    <div class="modal-foot">
+      <button class="small-btn" id="btnCloseTargets">Cancel</button>
+      <button class="small-btn" id="btnSaveTargets">Save intentions</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   DATA
+================================================================ */
+const DEFAULT_TASKS = [
+  {id:'teeth_pm',       label:'Brush teeth at night',  type:'daily',  category:'hygiene'},
+  {id:'wash_face_pm',   label:'Wash face at night',     type:'daily',  category:'hygiene'},
+  {id:'vitamins',       label:'Take vitamins',           type:'daily',  category:'hygiene'},
+  {id:'phone_detox',    label:'Phone detox',             type:'daily',  category:'sleep'},
+  {id:'no_scroll',      label:'Doom scrolling',          type:'daily',  category:'sleep'},
+  {id:'limit_eating',   label:'Limit eating out',        type:'daily',  category:'nutrition'},
+  {id:'box_breath',     label:'Box breathing',           type:'daily',  category:'mind'},
+  {id:'gratitude',      label:'Gratitude journal',       type:'daily',  category:'mind'},
+  {id:'wake_630',       label:'Wake 6:00–6:30',          type:'weekly', category:'sleep'},
+  {id:'meal_prep',      label:'Meal prep plan',          type:'weekly', category:'nutrition'},
+  {id:'workout',        label:'Workout',                 type:'weekly', category:'fitness'},
+  {id:'yoga',           label:'Yoga',                    type:'weekly', category:'fitness'},
+  {id:'walk_hike',      label:'Walk / Hike',             type:'weekly', category:'fitness'},
+  {id:'posture',        label:'Posture trainer',         type:'weekly', category:'fitness'},
+  {id:'Breathwork',     label:'Breathwork',              type:'weekly', category:'mind'},
+  {id:'meditation',     label:'Meditation',              type:'weekly', category:'mind'},
+  {id:'body_scan',      label:'Body scan',               type:'weekly', category:'mind'},
+  {id:'craft_hour',     label:'Craft / Art time',        type:'weekly', category:'creative'},
+  {id:'music_sing',     label:'Music practice',          type:'weekly', category:'creative'},
+  {id:'dance',          label:'Dance',                   type:'weekly', category:'creative'},
+  {id:'housework',      label:'Housework',               type:'weekly', category:'home'},
+  {id:'read',           label:'Read',                    type:'weekly', category:'learning'},
+  {id:'Write',          label:'Write',                   type:'weekly', category:'learning'},
+  {id:'Meetings',       label:'12 Step Meeting',         type:'weekly', category:'social'},
+  {id:'reachout3',      label:'Text / call 3 people',    type:'weekly', category:'social'},
+];
+
+const CATS = {
+  fitness:   {name:'Fitness',    color:'#4aa3ff'},
+  mind:      {name:'Mind',       color:'#a78bfa'},
+  hygiene:   {name:'Hygiene',    color:'#94a3b8'},
+  nutrition: {name:'Nutrition',  color:'#fb923c'},
+  home:      {name:'Home',       color:'#a3865e'},
+  creative:  {name:'Creative',   color:'#4ade80'},
+  social:    {name:'Social',     color:'#f472b6'},
+  sleep:     {name:'Sleep',      color:'#818cf8'},
+  learning:  {name:'Learning',   color:'#e2e8f0'},
+};
+
+/* Leaf positions — spread across canopy area in %, relative to tree panel */
+const LEAF_POSITIONS = (() => {
+  // Canopy region: x 8-92%, y 10-78% (above bottom bar)
+  const pts = [];
+  const rows = [
+    {y:12, xs:[20,33,47,60,73]},
+    {y:20, xs:[15,27,40,52,65,78]},
+    {y:29, xs:[12,23,35,47,58,70,82]},
+    {y:38, xs:[10,20,31,42,53,64,75,85]},
+    {y:47, xs:[12,22,33,44,55,66,77,86]},
+    {y:56, xs:[15,26,38,50,62,74,83]},
+    {y:65, xs:[20,32,45,57,68,79]},
+    {y:73, xs:[24,37,50,62,74]},
+  ];
+  rows.forEach(r => r.xs.forEach(x => pts.push([x, r.y])));
+  return pts;
+})();
+
+/* ================================================================
+   STATE
+================================================================ */
+const STORAGE_KEY = 'wellnessTree_v4';
+function pad(n){ return String(n).padStart(2,'0'); }
+function ymd(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function startOfWeekMonday(d){
+  const t = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const day = (t.getDay()+6)%7;
+  t.setDate(t.getDate()-day);
+  t.setHours(0,0,0,0);
+  return t;
+}
+function addDays(d,n){ const t=new Date(d); t.setDate(t.getDate()+n); return t; }
+
+function defaultState(){
+  const now = new Date();
+  return {
+    version: 4,
+    weekStart: ymd(startOfWeekMonday(now)),
+    lastSeenDate: ymd(now),
+    customTasks: [],
+    settings: {bgUrl:''},
+    tasks: {},
+    layoutByWeek: {},
+    log: {doneToday:[], doneWeek:[]}
+  };
+}
+
+function loadState(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && s.version === 4) return s;
+      // Attempt migration from v2
+      if(s && s.version === 2){
+        const ns = defaultState();
+        ns.weekStart = s.weekStart || ns.weekStart;
+        ns.lastSeenDate = s.lastSeenDate || ns.lastSeenDate;
+        ns.customTasks = s.customTasks || [];
+        ns.settings = s.settings || {bgUrl:''};
+        ns.tasks = s.tasks || {};
+        ns.log = s.log || {doneToday:[],doneWeek:[]};
+        return ns;
+      }
+    }
+  } catch(e){}
+  return defaultState();
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+function allTasks(){ return DEFAULT_TASKS.concat(state.customTasks||[]); }
+function catColor(cat){ return CATS[cat]?.color || '#888'; }
+function catName(cat){ return CATS[cat]?.name || cat; }
+
+function ensureTaskState(id){
+  if(!state.tasks[id]) state.tasks[id]={};
+  const ts = state.tasks[id];
+  if(!ts.daily)  ts.daily  = {completedDate:null, missedToday:false, completedToday:false};
+  if(!ts.weekly) ts.weekly = {target:null, progress:0, carryover:false};
+  return ts;
+}
+
+function performRollover(){
+  const now = new Date();
+  const today = ymd(now);
+  const yesterday = ymd(addDays(now,-1));
+  if(state.lastSeenDate !== today){
+    for(const task of allTasks()){
+      const ts = ensureTaskState(task.id);
+      if(task.type==='daily'){
+        ts.daily.missedToday = (ts.daily.completedDate !== yesterday);
+        ts.daily.completedToday = false;
+      }
+    }
+    state.lastSeenDate = today;
+    state.log.doneToday = [];
+  }
+  const currWeek = ymd(startOfWeekMonday(now));
+  if(state.weekStart !== currWeek){
+    for(const task of allTasks()){
+      const ts = ensureTaskState(task.id);
+      if(task.type==='weekly'){
+        const hadTarget = typeof ts.weekly.target==='number' && ts.weekly.target>0;
+        ts.weekly.carryover = hadTarget && (ts.weekly.progress < ts.weekly.target);
+        ts.weekly.progress = 0;
+        ts.weekly.target = null;
+      }
+    }
+    state.weekStart = currWeek;
+    state.log.doneWeek = [];
+  }
+  saveState();
+}
+
+/* ================================================================
+   LAYOUT
+================================================================ */
+function shuffle(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b; }
+
+function ensureLayout(){
+  if(!state.layoutByWeek) state.layoutByWeek={};
+  const wk = state.weekStart;
+  if(!state.layoutByWeek[wk]) state.layoutByWeek[wk]={};
+  const map = state.layoutByWeek[wk];
+  const ids = allTasks().map(t=>t.id);
+  if(Object.keys(map).length===0){
+    const spots = shuffle([...Array(LEAF_POSITIONS.length).keys()]);
+    ids.forEach((id,i)=>{ map[id]=spots[i%spots.length]; });
+    saveState(); return;
+  }
+  const used = new Set(Object.values(map));
+  const free = shuffle([...Array(LEAF_POSITIONS.length).keys()].filter(i=>!used.has(i)));
+  for(const id of ids){
+    if(map[id]==null) map[id]=free.length?free.pop():Math.floor(Math.random()*LEAF_POSITIONS.length);
+  }
+  saveState();
+}
+
+/* ================================================================
+   VISIBILITY
+================================================================ */
+function isVisible(task){
+  const ts = ensureTaskState(task.id);
+  if(task.type==='daily') return !ts.daily.completedToday;
+  const tgt = ts.weekly.target;
+  if(typeof tgt!=='number'||tgt<=0) return false;
+  return ts.weekly.progress < tgt;
+}
+
+function isMissed(task){
+  const ts = ensureTaskState(task.id);
+  return task.type==='daily' ? !!ts.daily.missedToday : !!ts.weekly.carryover;
+}
+
+/* ================================================================
+   RENDER — TREE
+================================================================ */
+function renderTree(){
+  const layer = document.getElementById('leafLayer');
+  layer.innerHTML='';
+
+  const map = state.layoutByWeek[state.weekStart]||{};
+  let shown=0;
+
+  // Tilt angles per spot index — gives organic "Chloe feel"
+  const TILTS = [-8,-5,-3,0,2,4,6,-6,3,-2,5,-4,7,-7,1,-1,4,-3,6,-5,2,0,-8,3,-4];
+
+  for(const task of allTasks()){
+    if(!isVisible(task)) continue;
+    const spotIdx = map[task.id]??Math.floor(Math.random()*LEAF_POSITIONS.length);
+    const [lx,ly] = LEAF_POSITIONS[spotIdx%LEAF_POSITIONS.length];
+    const ts = ensureTaskState(task.id);
+    const tilt = TILTS[spotIdx % TILTS.length];
+
+    const div = document.createElement('div');
+    div.className='leaf' + (isMissed(task)?(' '+(task.type==='daily'?'missed':'carryover')):'');
+    div.style.left = lx+'%';
+    div.style.top  = ly+'%';
+    div.style.animationDelay = (shown*0.03)+'s';
+    div.style.setProperty('--tilt', tilt+'deg');
+
+    const prog = task.type==='weekly'
+      ? `<span class="leaf-prog">${ts.weekly.progress}/${ts.weekly.target}</span>`
+      : '';
+
+    div.innerHTML = `<div class="leaf-inner" style="transform:rotate(${tilt}deg)">
+      <span class="leaf-dot" style="background:${catColor(task.category)}"></span>
+      <span>${task.label}</span>
+      ${prog}
+    </div>`;
+
+    div.addEventListener('click', ()=>onTapTask(task, div));
+    layer.appendChild(div);
+    shown++;
+  }
+
+  // All-done celebration state
+  if(shown===0){
+    const allTasks_ = allTasks();
+    const hasTargets = allTasks_.filter(t=>t.type==='weekly').some(t=>{
+      const ts=ensureTaskState(t.id);
+      return typeof ts.weekly.target==='number' && ts.weekly.target>0;
+    });
+    if(hasTargets || state.log.doneToday.length > 0){
+      const msg = document.createElement('div');
+      msg.style.cssText = `
+        position:absolute; inset:0; display:flex; flex-direction:column;
+        align-items:center; justify-content:center; z-index:6; pointer-events:none;
+        text-align:center; padding:20px;
+      `;
+      msg.innerHTML = `
+        <div style="font-family:var(--font-display);font-size:32px;font-weight:300;color:rgba(232,236,244,0.9);letter-spacing:0.04em;margin-bottom:6px;">All clear</div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:0.14em;text-transform:uppercase;">You showed up today ✦</div>
+      `;
+      layer.appendChild(msg);
+    }
+  }
+
+  // Bottom stats (desktop)
+  document.getElementById('statToday').textContent = state.log.doneToday.length;
+  document.getElementById('statWeek').textContent  = state.log.doneWeek.length;
+  document.getElementById('statOnTree').textContent = shown;
+
+  // Mobile stats strip
+  const ms = document.getElementById('mobileStats');
+  if(ms){
+    document.getElementById('mStatToday').textContent = state.log.doneToday.length;
+    document.getElementById('mStatWeek').textContent  = state.log.doneWeek.length;
+    document.getElementById('mStatTree').textContent  = shown;
+  }
+
+  renderBalanceRing();
+}
+
+function renderBalanceRing(){
+  const byCat = {};
+  for(const item of state.log.doneWeek) byCat[item.cat]=(byCat[item.cat]||0)+1;
+  const total = Object.values(byCat).reduce((a,b)=>a+b,0);
+
+  function drawRing(svgEl, cx, cy, r, iR){
+    svgEl.innerHTML='';
+    if(total===0){
+      const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      circle.setAttribute('cx',cx); circle.setAttribute('cy',cy); circle.setAttribute('r',r);
+      circle.setAttribute('fill','none'); circle.setAttribute('stroke','rgba(255,255,255,0.1)');
+      circle.setAttribute('stroke-width', r-iR);
+      svgEl.appendChild(circle);
+      return;
+    }
+    let startAngle=-Math.PI/2;
+    for(const cat of Object.keys(CATS)){
+      const count=byCat[cat]||0;
+      if(!count) continue;
+      const angle=(count/total)*Math.PI*2;
+      const endAngle=startAngle+angle;
+      const x1=cx+r*Math.cos(startAngle), y1=cy+r*Math.sin(startAngle);
+      const x2=cx+r*Math.cos(endAngle),   y2=cy+r*Math.sin(endAngle);
+      const ix1=cx+iR*Math.cos(startAngle),iy1=cy+iR*Math.sin(startAngle);
+      const ix2=cx+iR*Math.cos(endAngle),  iy2=cy+iR*Math.sin(endAngle);
+      const large=angle>Math.PI?1:0;
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${iR} ${iR} 0 ${large} 0 ${ix1} ${iy1} Z`);
+      path.setAttribute('fill',CATS[cat].color);
+      path.setAttribute('opacity','0.9');
+      svgEl.appendChild(path);
+      startAngle=endAngle;
+    }
+    // center fill
+    const mask=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    mask.setAttribute('cx',cx);mask.setAttribute('cy',cy);mask.setAttribute('r',iR);
+    mask.setAttribute('fill','#06080f');
+    svgEl.appendChild(mask);
+  }
+
+  // Desktop ring
+  const dSvg = document.getElementById('balanceRingSvg');
+  if(dSvg) drawRing(dSvg, 28, 28, 22, 15);
+
+  // Mobile ring
+  const mSvg = document.getElementById('mBalanceRingSvg');
+  if(mSvg) drawRing(mSvg, 18, 18, 14, 9);
+}
+
+/* ================================================================
+   RENDER — SIDE: ACTIVITY
+================================================================ */
+function renderActivity(){
+  const logT = document.getElementById('logToday');
+  const logW = document.getElementById('logWeek');
+  logT.innerHTML='';
+  logW.innerHTML='';
+  document.getElementById('countToday').textContent = state.log.doneToday.length||'';
+  document.getElementById('countWeek').textContent  = state.log.doneWeek.length||'';
+
+  const makeItem=(item,showDate)=>{
+    const li=document.createElement('li');
+    const when = showDate ? item.when.slice(5,10) : item.when.slice(11,16);
+    li.innerHTML=`<div class="log-label"><span class="log-dot" style="background:${catColor(item.cat)}"></span><span>${item.label}</span></div><span class="log-time">${when}</span>`;
+    return li;
+  };
+
+  if(!state.log.doneToday.length){
+    const li=document.createElement('li'); li.innerHTML=`<span class="empty-msg">Nothing yet today — you've got this.</span>`; logT.appendChild(li);
+  } else {
+    [...state.log.doneToday].reverse().slice(0,30).forEach(i=>logT.appendChild(makeItem(i,false)));
+  }
+  if(!state.log.doneWeek.length){
+    const li=document.createElement('li'); li.innerHTML=`<span class="empty-msg">The week is waiting for you.</span>`; logW.appendChild(li);
+  } else {
+    [...state.log.doneWeek].reverse().slice(0,60).forEach(i=>logW.appendChild(makeItem(i,true)));
+  }
+}
+
+/* ================================================================
+   RENDER — SIDE: BALANCE WHEEL
+================================================================ */
+function renderBalance(){
+  const svg = document.getElementById('balanceWheel');
+  svg.innerHTML='';
+  const legend = document.getElementById('wheelLegend');
+  legend.innerHTML='';
+  const theme = document.getElementById('weekTheme');
+  const catBars = document.getElementById('catBars');
+  catBars.innerHTML='';
+
+  const byCat={};
+  for(const item of state.log.doneWeek) byCat[item.cat]=(byCat[item.cat]||0)+1;
+  const total = Object.values(byCat).reduce((a,b)=>a+b,0);
+
+  // Wheel
+  const cx=60,cy=60,r=50,iR=26;
+  if(total===0){
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx','60');circle.setAttribute('cy','60');circle.setAttribute('r','50');
+    circle.setAttribute('fill','none');circle.setAttribute('stroke','rgba(255,255,255,0.07)');
+    circle.setAttribute('stroke-width','24');
+    svg.appendChild(circle);
+    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x','60');txt.setAttribute('y','64');txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('fill','rgba(255,255,255,0.2)');txt.setAttribute('font-size','9');txt.setAttribute('font-family','DM Mono, monospace');
+    txt.textContent='no data';
+    svg.appendChild(txt);
+  } else {
+    let startAngle=-Math.PI/2;
+    for(const cat of Object.keys(CATS)){
+      const count=byCat[cat]||0;
+      if(!count) continue;
+      const angle=(count/total)*Math.PI*2;
+      const endAngle=startAngle+angle;
+      const x1=cx+r*Math.cos(startAngle),y1=cy+r*Math.sin(startAngle);
+      const x2=cx+r*Math.cos(endAngle),y2=cy+r*Math.sin(endAngle);
+      const ix1=cx+iR*Math.cos(startAngle),iy1=cy+iR*Math.sin(startAngle);
+      const ix2=cx+iR*Math.cos(endAngle),iy2=cy+iR*Math.sin(endAngle);
+      const large=angle>Math.PI?1:0;
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${iR} ${iR} 0 ${large} 0 ${ix1} ${iy1} Z`);
+      path.setAttribute('fill',CATS[cat].color);
+      path.setAttribute('opacity','0.9');
+      svg.appendChild(path);
+      startAngle=endAngle;
+    }
+    const mask=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    mask.setAttribute('cx','60');mask.setAttribute('cy','60');mask.setAttribute('r','22');
+    mask.setAttribute('fill','rgba(8,10,18,0.95)');
+    svg.appendChild(mask);
+    const ttxt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    ttxt.setAttribute('x','60');ttxt.setAttribute('y','58');ttxt.setAttribute('text-anchor','middle');
+    ttxt.setAttribute('fill','rgba(232,236,244,0.9)');ttxt.setAttribute('font-size','16');ttxt.setAttribute('font-family','Cormorant Garamond, serif');ttxt.setAttribute('font-weight','300');
+    ttxt.textContent=total;
+    svg.appendChild(ttxt);
+    const stxt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    stxt.setAttribute('x','60');stxt.setAttribute('y','68');stxt.setAttribute('text-anchor','middle');
+    stxt.setAttribute('fill','rgba(232,236,244,0.3)');stxt.setAttribute('font-size','7');stxt.setAttribute('font-family','DM Mono, monospace');
+    stxt.textContent='done';
+    svg.appendChild(stxt);
+  }
+
+  // Legend + bars
+  const sorted = Object.keys(CATS).map(cat=>({cat,count:byCat[cat]||0})).sort((a,b)=>b.count-a.count);
+  const topCat = sorted.find(e=>e.count>0);
+  theme.textContent = topCat
+    ? `Leaning into ${catName(topCat.cat)} — ${topCat.count} completions this week.`
+    : `Complete a few practices to see your week's character emerge.`;
+
+  const maxCount = sorted[0]?.count||1;
+  for(const {cat,count} of sorted){
+    const pct=total?Math.round((count/total)*100):0;
+    const row=document.createElement('div');
+    row.className='legend-row'+(count?' has-data':'');
+    row.innerHTML=`<span class="legend-dot" style="background:${catColor(cat)}"></span><span>${catName(cat)}</span><span class="legend-pct">${pct?pct+'%':''}</span>`;
+    legend.appendChild(row);
+
+    // bar
+    const barWrap=document.createElement('div');
+    barWrap.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:5px;';
+    const label=document.createElement('div');
+    label.style.cssText=`width:64px;font-size:10px;color:var(--muted);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
+    label.textContent=catName(cat);
+    const barOuter=document.createElement('div');
+    barOuter.style.cssText='flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;';
+    const barInner=document.createElement('div');
+    barInner.style.cssText=`height:100%;border-radius:2px;background:${catColor(cat)};width:${maxCount?Math.round((count/maxCount)*100):0}%;transition:width 0.6s ease;opacity:${count?0.8:0.2};`;
+    barOuter.appendChild(barInner);
+    const num=document.createElement('div');
+    num.style.cssText='font-size:10px;color:var(--faint);width:16px;text-align:right;flex-shrink:0;';
+    num.textContent=count||'';
+    barWrap.append(label,barOuter,num);
+    catBars.appendChild(barWrap);
+  }
+}
+
+/* ================================================================
+   RENDER — SIDE: TASKS
+================================================================ */
+function renderTasksList(){
+  const container = document.getElementById('allTasksList');
+  container.innerHTML='';
+
+  // Populate category dropdown
+  const catSel=document.getElementById('newTaskCat');
+  catSel.innerHTML='';
+  Object.keys(CATS).forEach(k=>{
+    const opt=document.createElement('option');
+    opt.value=k; opt.textContent=CATS[k].name;
+    catSel.appendChild(opt);
+  });
+
+  // Group by daily/weekly
+  const tasks=allTasks();
+  const daily=tasks.filter(t=>t.type==='daily');
+  const weekly=tasks.filter(t=>t.type==='weekly');
+
+  const makeSection=(label,list)=>{
+    const hd=document.createElement('div');
+    hd.style.cssText='font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px;';
+    hd.textContent=label;
+    container.appendChild(hd);
+    for(const t of list){
+      const isBuiltin=DEFAULT_TASKS.some(d=>d.id===t.id);
+      const row=document.createElement('div');
+      row.className='task-row'+(isBuiltin?' builtin':'');
+      row.innerHTML=`<span class="tr-dot" style="background:${catColor(t.category)}"></span>
+        <span class="tr-label">${t.label}</span>
+        <span class="tr-type">${catName(t.category)}</span>
+        <button class="tr-del" title="${isBuiltin?'Built-in — cannot delete':'Delete'}">✕</button>`;
+      const btn=row.querySelector('.tr-del');
+      if(isBuiltin){ btn.disabled=true; }
+      else { btn.addEventListener('click',()=>deleteTask(t.id)); }
+      container.appendChild(row);
+    }
+  };
+  makeSection('Daily practices', daily);
+  makeSection('Weekly intentions', weekly);
+}
+
+/* ================================================================
+   RENDER — DATE
+================================================================ */
+function renderDate(){
+  const now=new Date();
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('dateDisplay').textContent =
+    `${days[now.getDay()]} ${months[now.getMonth()]} ${now.getDate()} · Week of ${state.weekStart}`;
+}
+
+/* ================================================================
+   RENDER ALL
+================================================================ */
+function renderAll(){
+  renderDate();
+  renderTree();
+  renderActivity();
+  renderBalance();
+  renderTasksList();
+  applyBackground();
+}
+
+/* ================================================================
+   INTERACTION
+================================================================ */
+function logCompletion(task){
+  const now=new Date();
+  const entry={id:task.id,label:task.label,cat:task.category,when:now.toISOString()};
+  state.log.doneToday.push(entry);
+  state.log.doneWeek.push(entry);
+}
+
+function onTapTask(task, leafEl){
+  const ts=ensureTaskState(task.id);
+  const today=ymd(new Date());
+
+  if(task.type==='daily'){
+    ts.daily.completedToday=true;
+    ts.daily.completedDate=today;
+    ts.daily.missedToday=false;
+    logCompletion(task);
+    animateLeaf(leafEl, task.label);
+  } else {
+    const tgt=ts.weekly.target||0;
+    if(tgt<=0){ showToast('Set a weekly target first — tap ⊛'); return; }
+    ts.weekly.progress=Math.min(tgt,(ts.weekly.progress||0)+1);
+    if(ts.weekly.progress>=tgt){
+      ts.weekly.carryover=false;
+      logCompletion(task);
+      animateLeaf(leafEl, task.label);
+    } else {
+      showToast(`${task.label} — ${ts.weekly.progress}/${tgt} ✓`);
+      saveState(); renderAll();
+    }
+  }
+  saveState();
+}
+
+function animateLeaf(leafEl, label){
+  leafEl.classList.add('completing');
+  showToast(`✓ ${label}`);
+  leafEl.addEventListener('animationend',()=>{ renderAll(); },{once:true});
+}
+
+function deleteTask(id){
+  if(!confirm('Remove this practice?')) return;
+  state.customTasks=(state.customTasks||[]).filter(t=>t.id!==id);
+  const wk=state.weekStart;
+  if(state.layoutByWeek?.[wk]) delete state.layoutByWeek[wk][id];
+  saveState(); ensureLayout(); renderAll();
+}
+
+/* ================================================================
+   TARGETS MODAL
+================================================================ */
+function openTargets(){
+  const grid=document.getElementById('targetGrid');
+  grid.innerHTML='';
+  const weekly=allTasks().filter(t=>t.type==='weekly');
+  for(const task of weekly){
+    const ts=ensureTaskState(task.id);
+    const val=typeof ts.weekly.target==='number'?ts.weekly.target:0;
+    const row=document.createElement('div');
+    row.className='target-row';
+    row.innerHTML=`
+      <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${catColor(task.category)};flex-shrink:0;display:inline-block;"></span>
+        <span class="tr-name">${task.label}</span>
+      </div>
+      <div class="tr-stepper">
+        <button class="stepper-btn" data-id="${task.id}" data-dir="-1">−</button>
+        <span class="stepper-val" id="sv_${task.id}">${val}</span>
+        <button class="stepper-btn" data-id="${task.id}" data-dir="1">+</button>
+      </div>`;
+    grid.appendChild(row);
+  }
+  grid.addEventListener('click', e=>{
+    const btn=e.target.closest('.stepper-btn');
+    if(!btn) return;
+    const id=btn.dataset.id;
+    const dir=Number(btn.dataset.dir);
+    const span=document.getElementById('sv_'+id);
+    const curr=Number(span.textContent)||0;
+    span.textContent=Math.max(0,Math.min(21,curr+dir));
+  });
+  document.getElementById('modalTargets').classList.add('open');
+}
+
+function closeTargets(){ document.getElementById('modalTargets').classList.remove('open'); }
+
+function saveTargets(){
+  const weekly=allTasks().filter(t=>t.type==='weekly');
+  for(const task of weekly){
+    const span=document.getElementById('sv_'+task.id);
+    if(!span) continue;
+    const v=Number(span.textContent)||0;
+    const ts=ensureTaskState(task.id);
+    ts.weekly.target=v;
+    ts.weekly.progress=Math.min(ts.weekly.progress||0,v);
+  }
+  saveState(); ensureLayout(); closeTargets(); renderAll();
+}
+
+/* ================================================================
+   ADD TASK
+================================================================ */
+function addTask(){
+  const label=document.getElementById('newTaskLabel').value.trim();
+  const type=document.getElementById('newTaskType').value;
+  const category=document.getElementById('newTaskCat').value;
+  if(!label){ showToast('Enter a practice name first'); return; }
+  const id='c_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+  state.customTasks.push({id,label,type,category});
+  ensureTaskState(id);
+  saveState(); ensureLayout(); renderAll();
+  document.getElementById('newTaskLabel').value='';
+  showToast(`Added: ${label}`);
+}
+
+/* ================================================================
+   BACKGROUND
+================================================================ */
+function applyBackground(){
+  const url=(state.settings?.bgUrl||'').trim();
+  const treeSvg=document.getElementById('treeSvg');
+  let img=document.getElementById('customBgImg');
+  if(url){
+    if(!img){
+      img=document.createElement('img');
+      img.id='customBgImg';
+      img.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.9;z-index:1;pointer-events:none;';
+      document.querySelector('.tree-panel').prepend(img);
+    }
+    img.src=url;
+    treeSvg.style.opacity='0.35';
+  } else {
+    if(img){ img.remove(); }
+    treeSvg.style.opacity='0.95';
+  }
+}
+
+/* ================================================================
+   EXPORT / IMPORT
+================================================================ */
+function exportState(){ prompt('Copy your backup JSON:',JSON.stringify(state,null,2)); }
+function importState(){
+  const txt=prompt('Paste backup JSON:');
+  if(!txt) return;
+  try {
+    const s=JSON.parse(txt);
+    if(!s||![2,4].includes(s.version)) throw new Error('wrong version');
+    state=s; state.version=4;
+    saveState(); performRollover(); ensureLayout(); renderAll();
+    showToast('Backup restored ✓');
+  } catch(e){ showToast('Could not read that backup'); }
+}
+
+/* ================================================================
+   TOAST
+================================================================ */
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ================================================================
+   TABS
+================================================================ */
+document.querySelectorAll('.side-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    switchTab(btn.dataset.tab);
+  });
+});
+
+/* ================================================================
+   WIRE BUTTONS
+================================================================ */
+document.getElementById('btnOpenTargets').addEventListener('click', openTargets);
+document.getElementById('btnCloseTargets').addEventListener('click', closeTargets);
+document.getElementById('btnSaveTargets').addEventListener('click', saveTargets);
+document.getElementById('btnExport').addEventListener('click', exportState);
+document.getElementById('btnImport').addEventListener('click', importState);
+document.getElementById('btnExport2').addEventListener('click', exportState);
+document.getElementById('btnImport2').addEventListener('click', importState);
+document.getElementById('btnAddTask').addEventListener('click', addTask);
+document.getElementById('newTaskLabel').addEventListener('keydown',e=>{ if(e.key==='Enter') addTask(); });
+document.getElementById('btnSaveBg').addEventListener('click',()=>{
+  if(!state.settings) state.settings={bgUrl:''};
+  state.settings.bgUrl=document.getElementById('bgUrl').value.trim();
+  saveState(); applyBackground(); showToast('Background saved');
+});
+document.getElementById('btnResetToday').addEventListener('click',()=>{
+  if(!confirm('Reset all of today\'s completions?')) return;
+  state.log.doneToday=[];
+  allTasks().forEach(t=>{ const ts=ensureTaskState(t.id); if(t.type==='daily'){ ts.daily.completedToday=false; } });
+  saveState(); renderAll(); showToast('Today reset');
+});
+document.getElementById('btnForceWeek').addEventListener('click',()=>{
+  const wk=startOfWeekMonday(new Date());
+  const prev=ymd(addDays(wk,-7));
+  state.weekStart=prev; saveState(); performRollover(); ensureLayout(); renderAll();
+  showToast('Forced new week');
+});
+document.getElementById('btnClearAll').addEventListener('click',()=>{
+  if(!confirm('Clear ALL saved data? This cannot be undone.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state=loadState(); performRollover(); ensureLayout(); renderAll();
+  showToast('All data cleared');
+});
+document.getElementById('balanceRingWrap').addEventListener('click', ()=>switchTab('balance'));
+
+const mRing = document.getElementById('mStatRing');
+if(mRing) mRing.addEventListener('click', ()=>switchTab('balance'));
+
+function switchTab(tabName){
+  document.querySelectorAll('.side-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  const btn = document.querySelector(`[data-tab="${tabName}"]`);
+  if(btn) btn.classList.add('active');
+  const pane = document.getElementById('tab-'+tabName);
+  if(pane) pane.classList.add('active');
+  if(tabName==='tasks') renderTasksList();
+}
+
+// Close modal on overlay click
+document.getElementById('modalTargets').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modalTargets')) closeTargets();
+});
+
+/* ================================================================
+   AUTO-REFRESH
+================================================================ */
+setInterval(()=>{
+  const before=state.lastSeenDate+'|'+state.weekStart;
+  performRollover();
+  const after=state.lastSeenDate+'|'+state.weekStart;
+  if(before!==after){ ensureLayout(); renderAll(); if(!allTasks().filter(t=>t.type==='weekly').some(t=>{ const ts=ensureTaskState(t.id); return typeof ts.weekly.target==='number'; })) openTargets(); }
+},60000);
+
+/* ================================================================
+   INIT
+================================================================ */
+let state = loadState();
+performRollover();
+ensureLayout();
+renderAll();
+
+// Prompt targets if none set
+const weeklyTasks=allTasks().filter(t=>t.type==='weekly');
+const anyTarget=weeklyTasks.some(t=>{ const ts=ensureTaskState(t.id); return typeof ts.weekly.target==='number'&&ts.weekly.target>0; });
+if(!anyTarget) setTimeout(openTargets, 600);
+
+// Pre-fill bg input
+document.getElementById('bgUrl').value=state.settings?.bgUrl||'';
+</script>
+</body>
+</html>
